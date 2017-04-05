@@ -101,47 +101,29 @@ int main(int argc, char* argv[]) {
   unsigned char nonce[crypto_box_NONCEBYTES] = "0";
   unsigned char ciphertext[ciphertext_len];
   
-  read_key("e-key-recipt.bin", r_encryption_key, crypto_box_PUBLICKEYBYTES);
-  read_key("d-key-sender.bin", s_decryption_key, crypto_box_SECRETKEYBYTES);
+  read_key("keys/e-key-recipt.bin", r_encryption_key,
+           crypto_box_PUBLICKEYBYTES);
+  read_key("keys/d-key-sender.bin", s_decryption_key,
+           crypto_box_SECRETKEYBYTES);
   //randombytes_buf(nonce, sizeof nonce);
   //unsigned char decrypted[MESSAGE_LEN];
 
   int j = crypto_box_easy(ciphertext, plaintext, plaintext_len, nonce,
                   r_encryption_key, s_decryption_key);
 
-  write_bin("ciphertext.bin", ciphertext, ciphertext_len);
+  write_bin("bin/ciphertext.bin", ciphertext, ciphertext_len);
 
-  //int i = crypto_box_open_easy(decrypted, ciphertext, ciphertext_len,
-  //                     nonce, s_encryption_key,
-  //                     r_decryption_key);
-
-
-    unsigned char sig_verif[crypto_sign_PUBLICKEYBYTES];
+  unsigned char sig_verif[crypto_sign_PUBLICKEYBYTES];
 
   unsigned char sig_constr[crypto_sign_SECRETKEYBYTES];
   unsigned char signed_message[crypto_sign_BYTES + plaintext_len];
   unsigned long long signed_message_len;
-  read_key("sig-constr-sender.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
+  read_key("keys/sig-constr-sender.bin", sig_constr,
+           crypto_sign_SECRETKEYBYTES);
   crypto_sign(signed_message, &signed_message_len, ciphertext,
               ciphertext_len, sig_constr);
 
   write_bin("signed-ciphertext.bin", signed_message, signed_message_len);
 
-
-  read_key("sig-verify-sender.bin", sig_verif, crypto_sign_PUBLICKEYBYTES);
-  int i = crypto_sign_open(ciphertext, &ciphertext_len, signed_message,
-                   signed_message_len, sig_verif);
-  printf("Did signing work? : %d\n", i);
-  
-
-  /*
-  unsigned char* len[3];
-  len[0] = malloc(sizeof(unsigned char) * 256);
-  len[1] = malloc(sizeof(unsigned char) * 256);
-  sprintf(len[0], "%lld", signed_message_len);
-  sprintf(len[1], "%d", plaintext_len);
-  len[2] = nonce;
-  write("info-file.txt", len, 3);
-  */
   return 0;
 }

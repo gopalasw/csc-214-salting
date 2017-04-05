@@ -24,16 +24,16 @@ void write_keypairs(int option, unsigned char* encryption_key,
                     unsigned char* decryption_key, unsigned char* sig_constr,
                     unsigned char* sig_verify) {
   if(option == 1) {
-    write_bin("e-key-sender.bin", encryption_key, crypto_box_PUBLICKEYBYTES);
-    write_bin("d-key-sender.bin", decryption_key, crypto_box_SECRETKEYBYTES);
-    write_bin("sig-constr-sender.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
-    write_bin("sig-verify-sender.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
+    write_bin("keys/e-key-sender.bin", encryption_key, crypto_box_PUBLICKEYBYTES);
+    write_bin("keys/d-key-sender.bin", decryption_key, crypto_box_SECRETKEYBYTES);
+    write_bin("keys/sig-constr-sender.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
+    write_bin("keys/sig-verify-sender.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
   }
   else {
-    write_bin("e-key-recipt.bin", encryption_key, crypto_box_PUBLICKEYBYTES);
-    write_bin("d-key-recipt.bin", decryption_key, crypto_box_SECRETKEYBYTES);
-    write_bin("sig-constr-recipt.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
-    write_bin("sig-verify-recipt.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
+    write_bin("keys/e-key-recipt.bin", encryption_key, crypto_box_PUBLICKEYBYTES);
+    write_bin("keys/d-key-recipt.bin", decryption_key, crypto_box_SECRETKEYBYTES);
+    write_bin("keys/sig-constr-recipt.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
+    write_bin("keys/sig-verify-recipt.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
   }
   
 
