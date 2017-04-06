@@ -1,8 +1,7 @@
 #include <sodium.h>
 #include <stdio.h>
 #include <sys/stat.h>
-
-int nonce_length = 10;
+#include <string.h>
 
 FILE* open_file(char* filename, char* type) {
 
@@ -69,36 +68,44 @@ int main(int argc, char* argv[]) {
   // Find the size of the file
   struct stat st;
   stat(argv[1], &st);
-  int signed_len = st.st_size;
+  unsigned long long signed_len = st.st_size;
 
+  int nonce_size = crypto_box_NONCEBYTES;
+  unsigned char nonce[nonce_size];
   // calculate the size of ciphertext and plaintext from the file
+
   unsigned long long ciphertext_len = signed_len - crypto_sign_BYTES;
-  int plaintext_len = ciphertext_len - crypto_box_MACBYTES - nonce_length;
+  unsigned long long plaintext_len = ciphertext_len - crypto_box_MACBYTES;
 
   unsigned char plaintext[plaintext_len];
   unsigned char ciphertext[ciphertext_len];
   unsigned char signed_message[signed_len];
   read_bin(argv[1], signed_message, signed_len);
-
+  read_bin("bin/nonce.bin", nonce, nonce_size);
 
   unsigned char sig_verif[crypto_sign_PUBLICKEYBYTES];
   read_bin("keys/sig-verify-sender.bin", sig_verif, crypto_sign_PUBLICKEYBYTES);
-  int i = crypto_sign_open(ciphertext, &ciphertext_len, signed_message,
-                   signed_len, sig_verif);
+  if(crypto_sign_open(ciphertext, &ciphertext_len, signed_message,
+                   signed_len, sig_verif) != 0) {
+    perror("Could not verify signature.");
+    exit(2);
 
+  }
+
+  write_bin("bin/read-signed-ciphertext.bin", signed_message, signed_len);
   unsigned char s_encryption_key[crypto_box_PUBLICKEYBYTES];
   unsigned char r_decryption_key[crypto_box_SECRETKEYBYTES];
-  unsigned char nonce[crypto_box_NONCEBYTES];
-  strncpy(nonce, ciphertext, nonce_length);
+  //strncpy(nonce, ciphertext, nonce_size);
+  //printf("%s\n", ciphertext);
+  write_bin("bin/read-ciphertext.bin", ciphertext, ciphertext_len);
 
   read_bin("keys/e-key-sender.bin", s_encryption_key,
            crypto_box_PUBLICKEYBYTES);
   read_bin("keys/d-key-recipt.bin", r_decryption_key,
            crypto_box_SECRETKEYBYTES);
-  //randombytes_buf(nonce, sizeof nonce);
 
-  if(crypto_box_open_easy(plaintext, ciphertext[nonce_length],
-                          ciphertext_len - nonce_length, nonce,
+  if(crypto_box_open_easy(plaintext, ciphertext,
+                          ciphertext_len, nonce,
                           s_encryption_key, r_decryption_key) !=0) {
     perror("Not a valid decryption.");
     exit(2);

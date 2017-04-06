@@ -1,9 +1,6 @@
 #include <sodium.h>
 #include <stdio.h>
-
-#define MESSAGE (const unsigned char*) "test"
-#define MESSAGE_LEN 4
-#define CIPHERTEXT_LEN (crypto_box_MACBYTES + MESSAGE_LEN)
+#include <string.h>
 
 FILE* open_file(char* filename, char* type) {
 
@@ -23,19 +20,7 @@ void write_bin(char* filename, unsigned char* bin_str, size_t bin_length) {
   fclose(file);
   
 }
-/*
-void write_info(char* filename, unsigned char* message[], int size) {
 
-  FILE* file = open_file(filename, "w");
-  int i = 0;
-  for(i = 0; i < size; i++) {
-    fputs(message[i], file);
-    fputs("\n", file);
-  }
-  fclose(file);
-  
-}
-*/
 void read_key(char* filename, unsigned char* key, size_t size) {
 
   FILE* file = open_file(filename, "rb");
@@ -51,6 +36,20 @@ void write(char* filename, unsigned char* message) {
 
   FILE* file = open_file(filename, "w");
   fputs(message, file);
+  fclose(file);
+  
+}
+
+
+void read_bin(char* filename, unsigned char* key, size_t len) {
+
+  FILE* file = open_file(filename, "rb");
+  if(file == NULL) {
+    perror(filename);
+    exit(2);
+  }
+  //read from file
+  fread(key, sizeof(unsigned char), len, file);
   fclose(file);
   
 }
@@ -75,7 +74,6 @@ void read_file(char* filename, unsigned char* plaintext, int size) {
   int index = 0;
   char cur = fgetc(file);
   while(cur != EOF) {
-    printf("%c", cur);
     plaintext[index] = cur;
     index++;
     cur = fgetc(file);
@@ -91,39 +89,75 @@ int main(int argc, char* argv[]) {
   }
   
   FILE* plaintext_file = open_file(argv[1], "r");
-  int plaintext_len = count_chars(plaintext_file);
+  int plaintext_len = count_chars(plaintext_file); 
+  unsigned char nonce[crypto_box_NONCEBYTES];
+  int nonce_size = sizeof nonce;
   unsigned long long ciphertext_len = crypto_box_MACBYTES + plaintext_len;
   unsigned char plaintext[plaintext_len];
   read_file(argv[1], plaintext, plaintext_len);
-
   unsigned char r_encryption_key[crypto_box_PUBLICKEYBYTES];
   unsigned char s_decryption_key[crypto_box_SECRETKEYBYTES];
-  unsigned char nonce[crypto_box_NONCEBYTES] = "0";
   unsigned char ciphertext[ciphertext_len];
   
   read_key("keys/e-key-recipt.bin", r_encryption_key,
            crypto_box_PUBLICKEYBYTES);
   read_key("keys/d-key-sender.bin", s_decryption_key,
            crypto_box_SECRETKEYBYTES);
-  //randombytes_buf(nonce, sizeof nonce);
-  //unsigned char decrypted[MESSAGE_LEN];
+  randombytes_buf(nonce, sizeof nonce);
+  
+  int j = crypto_box_easy(ciphertext, plaintext, plaintext_len,
+		  nonce, r_encryption_key, s_decryption_key);
 
-  int j = crypto_box_easy(ciphertext, plaintext, plaintext_len, nonce,
-                  r_encryption_key, s_decryption_key);
-
+  //strncpy(ciphertext, nonce, nonce_size);
   write_bin("bin/ciphertext.bin", ciphertext, ciphertext_len);
-
-  unsigned char sig_verif[crypto_sign_PUBLICKEYBYTES];
+  write_bin("bin/nonce.bin", nonce, nonce_size);
+  printf("%s\n", nonce);
 
   unsigned char sig_constr[crypto_sign_SECRETKEYBYTES];
-  unsigned char signed_message[crypto_sign_BYTES + plaintext_len];
+  unsigned char signed_message[crypto_sign_BYTES + ciphertext_len];
   unsigned long long signed_message_len;
   read_key("keys/sig-constr-sender.bin", sig_constr,
            crypto_sign_SECRETKEYBYTES);
-  crypto_sign(signed_message, &signed_message_len, ciphertext,
-              ciphertext_len, sig_constr);
+  
+  if(crypto_sign(signed_message, &signed_message_len, ciphertext,
+              ciphertext_len, sig_constr) != 0) {
+    perror("Error signing.");
+    exit(2);
+  }
 
-  write_bin("signed-ciphertext.bin", signed_message, signed_message_len);
+  write_bin("bin/signed-ciphertext.bin", signed_message, signed_message_len);
+
+
+  unsigned char sig_verif[crypto_sign_PUBLICKEYBYTES];
+  read_bin("keys/sig-verify-sender.bin", sig_verif,
+		 crypto_sign_PUBLICKEYBYTES);
+  if(crypto_sign_open(ciphertext, &ciphertext_len, signed_message,
+                   signed_message_len, sig_verif) != 0) {
+    perror("Could not verify signature.");
+    exit(2);
+
+  }
+
+
+
+  unsigned char s_encryption_key[crypto_box_PUBLICKEYBYTES];
+  unsigned char r_decryption_key[crypto_box_SECRETKEYBYTES];
+  //strncpy(nonce, ciphertext, nonce_size);
+  printf("%d\n", ciphertext_len);
+
+  read_bin("keys/e-key-sender.bin", s_encryption_key,
+           crypto_box_PUBLICKEYBYTES);
+  read_bin("keys/d-key-recipt.bin", r_decryption_key,
+           crypto_box_SECRETKEYBYTES);
+
+  if(crypto_box_open_easy(plaintext, ciphertext,
+                          ciphertext_len, nonce,
+                          s_encryption_key, r_decryption_key) !=0) {
+    perror("Not a valid decryption.");
+    exit(2);
+  }
+
+
 
   return 0;
 }
