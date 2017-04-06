@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   }
 
   // write signed ciphertext to binary file
-  write_bin("bin/signed-ciphertext.bin", signed_ciphertext, signed_len);
+  write_bin("signed-ciphertext.bin", signed_ciphertext, signed_len);
 
   return 0;
 }

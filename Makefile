@@ -13,4 +13,4 @@ decrypt: decrypt-message.c
 	$(CC) -o decrypt-message decrypt-message.c $(CFLAGS)
 
 clean:
-	rm -f *.o *~ core* $(TARGET) bin/* keys/*	
+	rm -f *.o *~ core* $(TARGET) plaintext.txt signed_ciphertext.txt  keys/*	
