@@ -5,7 +5,7 @@ FILE* open_file(char* filename, char* type) {
 
   FILE* file = fopen(filename, type);
   if(file == NULL) {
-    perror("opening password file");
+    perror(filename);
     exit(2);
   }
 
@@ -13,7 +13,9 @@ FILE* open_file(char* filename, char* type) {
 }
 
 void write_bin(char* filename, unsigned char* key, size_t key_length) {
-  FILE* file = open_file(filename, "wb");
+  FILE* file = open_file(filename, "wb+");
+  //fclose(file);
+  //file = open_file(filename, "wb");
  
   fwrite(key, sizeof(unsigned char), key_length, file);
 

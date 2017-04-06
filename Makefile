@@ -1,6 +1,8 @@
+TARGET = create-keys encrypt-message decrypt-message
 CC=gcc
 CFLAGS = -lsodium
 
+all : $(TARGET)
 init: create-keys.c
 	$(CC) -o create-keys create-keys.c $(CFLAGS)
 
@@ -11,4 +13,4 @@ decrypt: decrypt-message.c
 	$(CC) -o decrypt-message decrypt-message.c $(CFLAGS)
 
 clean:
-	rm -f /*.o *~
+	rm -f *.o *~ core* $(TARGET)	
