@@ -1,1 +1,6 @@
-hi this is a message
+hello
+this is a test message
+it contains numbers (12345) and special characters (!@#$%)
+as well as tabs and newlines
+   such as here
+!!
