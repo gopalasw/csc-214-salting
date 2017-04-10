@@ -14,8 +14,6 @@ FILE* open_file(char* filename, char* type) {
 
 void write_bin(char* filename, unsigned char* key, size_t key_length) {
   FILE* file = open_file(filename, "wb+");
-  //fclose(file);
-  //file = open_file(filename, "wb");
  
   fwrite(key, sizeof(unsigned char), key_length, file);
 
@@ -31,13 +29,15 @@ void write_keypairs(int option, unsigned char* encryption_key,
     write_bin("keys/sig-constr-sender.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
     write_bin("keys/sig-verify-sender.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
   }
-  else {
+  else if(option == 2) {
     write_bin("keys/e-key-recipt.bin", encryption_key, crypto_box_PUBLICKEYBYTES);
     write_bin("keys/d-key-recipt.bin", decryption_key, crypto_box_SECRETKEYBYTES);
     write_bin("keys/sig-constr-recipt.bin", sig_constr, crypto_sign_SECRETKEYBYTES);
     write_bin("keys/sig-verify-recipt.bin", sig_verify, crypto_sign_PUBLICKEYBYTES);
   }
-  
+  else {
+    printf("Please enter a valid option.\n");
+  }
 
 }
 
@@ -49,7 +49,7 @@ int main() {
   }
 
   int option;
-  printf("If sender keys, input 1, else input 2: ");
+  printf("If you want to generate sender keys, input 1.\nIf you want to generate reciever keys, input 2:\n ");
   scanf("%d", &option);
 
   unsigned char encryption_key[crypto_box_PUBLICKEYBYTES];
